@@ -1,7 +1,25 @@
 <template>
   <div class="home">
+    <div class="lang-page__header px-md py-sm">
+      <div class="lang-page__header-left">
+        <BaseFormSelect
+          class="leng-select"
+          v-model="$i18n.locale"
+          :options="languageOptions"
+          :label="$t('message.language')"/>
+      </div>
+      <div class="lang-page__header-right pt-rg">
+        <button
+          v-if="!emptyQuestionList"
+          class="btn btn-success btn-rg btn-fit"
+          @click.prevent="() => openCardPanel(null, { left: center.x, top: 100})"
+          >
+          <span >{{$t("message.newChatbot")}}</span>
+        </button>
+     </div>
+    </div>
     <canvas class="canvas" ref="conversationCanvas" width="1900" height="1000"></canvas>    
-    <CardSidePanel ref="cardSidePanel"></CardSidePanel>
+    <CardSidePanel @new-bot="drawNewBot" ref="cardSidePanel"></CardSidePanel>
   </div>
 </template>
 
@@ -9,26 +27,27 @@
 // @ is an alias to /src
 import { fabric } from 'fabric'
 import CardSidePanel from '@/components/cards/CardSidePanel'
+import BaseFormSelect from '@/components/ui/BaseFormSelect'
 
-fabric.Canvas.prototype.getItemByName = function(internal_name) {
-  return this.getObjects().find((object) =>  object?.internal_name == internal_name)
+fabric.Canvas.prototype.getItemByName = function(internalName) {
+  return this.getObjects().find((object) =>  object?.internalName == internalName)
 }
 fabric.Object.prototype.originX = fabric.Object.prototype.originY = 'center'
 
 export default {
   name: 'Home',
   components: {
-    CardSidePanel
+    CardSidePanel,
+    BaseFormSelect
   },
   data () {
     return {
       card: {
-        width: 100,
-        height: 20,
+        width: 300,
+        height: 50,
         color: '#f5f5f5',
         border: '#616161',
         paddingX: 200,
-        brotherPadding: 20,
         paddingY: 100
       },
       line: {
@@ -37,15 +56,7 @@ export default {
         borderHeight: 4
       },
       canvas: null,
-      cardList: [
-        { internal_name: 'salute', path: '', label: 'Saludo inicial' },
-        { internal_name: 'seguimiento', path: 'salute', label: 'Seguimiento de pedidos' },
-        { internal_name: 'medios_pago', path: 'salute', label: 'Medios de pago' },
-        { internal_name: 'sucursales', path: 'salute', label: 'Sucursales' },
-        { internal_name: 'otra_consulta', path: 'salute', label: 'Otra consulta' },
-        { internal_name: 'buscar_operador', path: 'salute,otra_consulta', label: 'Buscar un operador' },
-        { internal_name: 'consulta_resuelta', path: 'salute,otra_consulta', label: 'Gracias por comunicarse con nosotros' }
-      ]
+      canvasCardList: []
     }
   },
 
@@ -56,6 +67,17 @@ export default {
         x:fabric.util.invertTransform(this.canvas.viewportTransform)[4]+(this.canvas.width/zoom)/2,
         y:fabric.util.invertTransform(this.canvas.viewportTransform)[5]+(this.canvas.height/zoom)/2
       }
+    },
+    languageOptions () {
+      return [
+      { label: 'English', code:'en' },
+      { label: 'Japanese', code: 'ja'},
+      { label: 'Spanish', code:'es' }
+      ]
+    },
+
+    emptyQuestionList () {
+      return this.$store.getters.getDinabot.questionList.length
     }
   },
 
@@ -63,7 +85,7 @@ export default {
     getCardChildrens (cardToSearch) {
       const childrens = this.cardList.filter(card => {
         const pathList = card.path.split(',')
-        const isChildren = pathList[pathList.length - 1] == cardToSearch.internal_name
+        const isChildren = pathList[pathList.length - 1] == cardToSearch.internalName
         return isChildren
       })
       return childrens
@@ -73,7 +95,7 @@ export default {
       const cardPath = cardToSearch.path.split(',')
       const cardParent = cardPath[cardPath.length - 1]
       const parent = this.cardList.find(card => {
-        return card.internal_name == cardParent
+        return card.internalName == cardParent
       })
       return parent
     },
@@ -83,13 +105,21 @@ export default {
       const cardParent = cardPath[cardPath.length - 1]
       const brothers = this.cardList.filter(card => {
         const pathList = card.path.split(',')
-        const isBrother = pathList[pathList.length - 1] == cardParent && cardToSearch.internal_name != card.internal_name
+        const isBrother = pathList[pathList.length - 1] == cardParent && cardToSearch.internalName != card.internalName
         return isBrother
       })
       return brothers
     },
 
-    drawCard (top, left, internal_name) {
+    drawNewBot(dinabot) {
+      const question = dinabot.questionList.find(question => question.internalName === 'salute')
+      const card = this.drawCard(question.position.top, question.position.left, question.internalName)
+      this.$store.getters.getDinabot.questionList.push(question)
+      this.canvasCardList.push(card)
+      this.canvas.add(card)
+    },
+
+    drawCard (top, left, internalName) {
       const card = new fabric.Rect({
         top: top,
         left: left,
@@ -97,7 +127,7 @@ export default {
         height: this.card.height,
         fill: this.card.color,
         stroke: this.card.border,
-        internal_name: internal_name
+        internalName: internalName
       })
 
       this.onCardDobleClick(card)
@@ -118,13 +148,13 @@ export default {
           startX += this.card.width + this.card.paddingX
         } else {
           if (getParent(card)) {
-            startX = cards.find(elem => elem.internal_name == getParent(card).internal_name).left - ((this.getCardBrothers(card).length / 2) * (this.card.width + this.card.paddingX))
+            startX = cards.find(elem => elem.internalName == getParent(card).internalName).left - ((this.getCardBrothers(card).length / 2) * (this.card.width + this.card.paddingX))
           } else {
             startX = this.center.x - ((this.getCardBrothers(card).length / 2) * (this.card.width + this.card.paddingX))
           }
         }
         const cardY = card.path ? this.card.paddingY * pathSize : 100
-        const cardDrawed = this.drawCard(cardY, startX, card.internal_name)
+        const cardDrawed = this.drawCard(cardY, startX, card.internalName)
         lastYPathSize = pathSize
         cards.push(cardDrawed)
       })
@@ -132,7 +162,7 @@ export default {
       const lines = cards.map(card => {
         const childrens = this.getCardChildrens(card)
         const linesToDraw = childrens.map(children => {
-          const childrenCard = cards.find(elem => elem.internal_name == children.internal_name)
+          const childrenCard = cards.find(elem => elem.internalName == children.internalName)
           const lineWillDraw = drawLines(card, childrenCard)
           childrenCard.targetLine = lineWillDraw
           return lineWillDraw
@@ -187,12 +217,13 @@ export default {
     onCardDobleClick (card) {
       const openPanel = this.openCardPanel
       card.on('mousedblclick', function(card) { 
-        openPanel(card.target)
+        openPanel(card.target, { left: card.target.left, top: card.target.top + 200 })
       })
     },
 
-    openCardPanel (card) {
-      this.$refs.cardSidePanel.open(card)
+    openCardPanel (card, position) {
+      const question = this.$store.getters.getDinabot.questionList.find(question => question.internalName == card.internalName)
+      this.$refs.cardSidePanel.open(question, position)
     }
   },
   
@@ -214,8 +245,6 @@ export default {
       // this.canvas.add(card1)
       // this.canvas.add(card2)
       
-      this.drawTree()
-
       this.onMoving(this.canvas)
       this.wheelZoom(this.canvas)
   }
@@ -226,8 +255,46 @@ export default {
 .home {
   width: 100%;
   min-height: 100vh;
-    display: flex;
-  align-items: center;
-  justify-content: center;
+}
+
+.lang-page__header {
+  display: flex;
+  align-items: right;
+  font-family: $font-family-primary;
+
+  .leng-select{
+    width: 100%;
+  }
+
+  & > div {
+    flex: 1;
+
+    &.lang-page__header-left {
+      text-align: left;
+      max-width: 15%;
+    }
+
+    &.lang-page__header-right {
+      text-align: right;
+
+      span {
+        font-size: 0.85rem;
+        font-weight: 400;
+      }
+
+      .btn-sign-up {
+        -webkit-box-shadow: 0 5px 15px rgba($color-shadow, 0.25);
+        -moz-box-shadow: 0 5px 15px rgba($color-shadow, 0.25);
+        box-shadow: 0 5px 15px rgba($color-shadow, 0.25);
+
+        &:hover {
+          transform: scale(1.1);
+          -webkit-box-shadow: 0 5px 18px rgba($color-shadow, 0.15);
+          -moz-box-shadow: 0 5px 18px rgba($color-shadow, 0.15);
+          box-shadow: 0 5px 18px rgba($color-shadow, 0.15);
+        }
+      }
+    }
+  }
 }
 </style>

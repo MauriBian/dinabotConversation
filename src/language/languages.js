@@ -30,8 +30,13 @@ export default {
       cancel: 'Cancel',
       labelSelector: 'Movie / Series / Episode',
       loadApiKey: 'Load api key',
-      load: 'Load'
-
+      load: 'Load',
+      newChatbot: 'Create new conversation',
+      newChatbotDescription: '¿Desea crear una conversación nueva?',
+      botName: 'Bot name',
+      label: 'Label',
+      salute: 'Initial greeting',
+      text: "Question text"
     }
   },
   ja: {
@@ -66,6 +71,11 @@ export default {
       loadApiKey: 'APIキーをロードします',
       load: '負荷',
       save: '保存する',
+      newChatbot: '新しい会話を作成する',
+      botName: 'ボット名',
+      salute: '最初の挨拶',
+      label: '最初の挨拶',
+      text: '質問テキスト'
     }
   },
   es: {
@@ -99,7 +109,13 @@ export default {
       cancel: 'Cancelar',
       labelSelector: 'Pelicula / Serie / Episodio',
       loadApiKey: 'Cargar api key',
-      load: 'Cargar'
+      load: 'Cargar',
+      botName: 'Nombre del bot',
+      newChatbot: 'Crear conversación',
+      newChatbotDescription: '¿Desea crear una conversación nueva?',
+      label: 'Etiqueta',
+      salute: 'Saludo inicial',
+      text: 'Texto de la pregunta'
     }
   }
 }

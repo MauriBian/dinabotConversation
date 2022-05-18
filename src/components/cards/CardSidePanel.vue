@@ -8,9 +8,22 @@
     </template>
     <template v-slot:main>
       <div class="mt-sm">
-
+        <div class="mt-sm" v-if="!card">
+          <BaseFormInput v-model="form.name" :label="$t('message.botName')"></BaseFormInput>
+        </div>
+        <div class="mt-md mb-rg">
+          <p class="subtitle-salute"> {{ $t('message.salute') }}</p>
+        </div>
+        <div class="mt-sm">
+          <BaseFormInput v-model="form.label" :label="$t('message.label')"></BaseFormInput>
+        </div>
+        <div class="mt-sm">
+          <BaseFormInput v-model="form.text" :label="$t('message.text')"></BaseFormInput>
+        </div>
       </div>
-      <div class="form-row mt-md mb-rg">
+    </template>
+    <template v-slot:footer>
+      <div class="pb-md form-row mt-md mb-rg">
         <button
           type="button"
           class="btn btn-abort btn-rg btn-fit px-lg mr-sm"
@@ -24,17 +37,32 @@
           @click.prevent="submit"
             >
           <span >{{$t("message.save")}}</span>
-      </button>
-    </div>
+        </button>
+      </div>
     </template>
   </BaseSidePanel>
 </template>
 
 <script>
+import BaseFormInput from '@/components/ui/BaseFormInput'
 import BaseSidePanel from '@/components/ui/BaseSidePanel.vue'
 export default {
   data () {
     return {
+      card: null,
+      form: {
+          name: '',
+          label: '',
+          text: '',
+          questionType: 'text',
+          responseType: 'text',
+          path: 'test',
+          internalName:'salute',
+          position: {
+            left: 0,
+            top: 0
+          }
+      }
     }
   },
 
@@ -50,13 +78,16 @@ export default {
   },
 
   components: {
-    BaseSidePanel
+    BaseSidePanel,
+    BaseFormInput
   },
 
   methods: {
-   
-
-    open () {
+  
+    open (card, position) {
+      this.card = card
+      this.form.position.left = position.left
+      this.form.position.top = position.top
       this.$refs.sidePanel.open()
     },
 
@@ -69,6 +100,48 @@ export default {
     },
 
     async submit () {
+      if(!this.card) {
+        const dinabot = {
+          name: this.form.name,
+          questionList: [{
+            label: this.form.label,
+            text: this.form.text,
+            questionType: this.form.questionType,
+            responseType: this.form.responseType,
+            path: this.form.path,
+            internalName: this.form.internalName,
+            position: this.form.position
+          }]
+      }
+      const newBot = await this.$store.dispatch('createDinabot', dinabot)
+      this.$emit('new-bot', newBot)
+      } else {
+        const question = {
+          label: this.form.label,
+          text: this.form.text,
+          questionType: this.form.questionType,
+          responseType: this.form.responseType,
+          path: this.card.path ? this.card.path + `,${this.card.internalName}`: this.card.internalName,
+          internalName: this.form.label.toLowerCase() + '@' + (Math.random() + 1).toString(36).substring(7),
+          position: this.form.position
+        }
+        const newQuestion = await this.$store.dispatch('addQuestion', question)
+        this.$emit('new-question', newQuestion)
+      }
+
+      this.form = {
+          name: '',
+          label: '',
+          text: '',
+          questionType: 'text',
+          responseType: 'text',
+          path: '',
+          internalName:'salute',
+          position: {
+            left: 0,
+            top: 0
+          }
+      }
       this.close()
     }
   }
@@ -77,4 +150,9 @@ export default {
 
 <style lang="scss" scoped>
 
+.subtitle-salute {
+  font-size: 1.2rem;
+  text-align: left;
+  color: $color-success
+}
 </style>
