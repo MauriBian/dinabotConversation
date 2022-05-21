@@ -19,7 +19,7 @@
      </div>
     </div>
     <canvas class="canvas" ref="conversationCanvas" width="1900" height="1000"></canvas>    
-    <CardSidePanel @new-bot="drawNewBot" ref="cardSidePanel"></CardSidePanel>
+    <CardSidePanel @new-question="drawNewQuestion" @new-bot="drawNewBot" ref="cardSidePanel"></CardSidePanel>
   </div>
 </template>
 
@@ -113,26 +113,49 @@ export default {
 
     drawNewBot(dinabot) {
       const question = dinabot.questionList.find(question => question.internalName === 'salute')
-      const card = this.drawCard(question.position.top, question.position.left, question.internalName)
-      this.$store.getters.getDinabot.questionList.push(question)
+      const card = this.drawCard(question.position.top, question.position.left, question)
       this.canvasCardList.push(card)
       this.canvas.add(card)
     },
 
-    drawCard (top, left, internalName) {
+    drawNewQuestion(newQuestion) {
+      const parents = newQuestion.path.split(',')
+      const parentInternalName = parents[parents.length - 1]
+      const parentQuestion = this.canvasCardList.find(question => question.internalName == parentInternalName)
+      const card = this.drawCard(newQuestion.position.top, newQuestion.position.left, newQuestion)
+      const line = this.drawLine(parentQuestion, card)
+      this.canvasCardList.push(card)
+      card.targetLine = line
+      parentQuestion.spawnerLine ? parentQuestion.spawnerLine.push(line) : parentQuestion.spawnerLine = [line]
+      this.canvas.add(card)
+      this.canvas.add(line)
+      this.canvas.moveTo(line, 0);
+      this.canvas.renderAll()
+    },
+
+    drawCard (top, left, cardToDraw) {
       const card = new fabric.Rect({
-        top: top,
-        left: left,
         width: this.card.width,
         height: this.card.height,
         fill: this.card.color,
         stroke: this.card.border,
-        internalName: internalName
+        internalName: cardToDraw.internalName
       })
 
-      this.onCardDobleClick(card)
-      card.hasControls = card.hasBorders = false
-      return card
+      const text = new fabric.Text(cardToDraw.label , {
+        fontFamily: 'arial',
+        fontSize: 25
+      })
+
+      const group = new fabric.Group([card, text], {
+        top: top,
+        left: left,
+        internalName: cardToDraw.internalName
+      })
+
+      this.onCardDobleClick(group)
+      group.hasControls = group.hasBorders = false
+      return group
     },
 
     drawTree () {
@@ -154,7 +177,7 @@ export default {
           }
         }
         const cardY = card.path ? this.card.paddingY * pathSize : 100
-        const cardDrawed = this.drawCard(cardY, startX, card.internalName)
+        const cardDrawed = this.drawCard(cardY, startX, card)
         lastYPathSize = pathSize
         cards.push(cardDrawed)
       })
@@ -217,7 +240,8 @@ export default {
     onCardDobleClick (card) {
       const openPanel = this.openCardPanel
       card.on('mousedblclick', function(card) { 
-        openPanel(card.target, { left: card.target.left, top: card.target.top + 200 })
+        const cardSelected = card.target._objects[0]
+        openPanel(cardSelected, { left: card.target.left, top: card.target.top + 200 })
       })
     },
 

@@ -12,7 +12,7 @@
           <BaseFormInput v-model="form.name" :label="$t('message.botName')"></BaseFormInput>
         </div>
         <div class="mt-md mb-rg">
-          <p class="subtitle-salute"> {{ $t('message.salute') }}</p>
+          <p class="subtitle-salute"> {{ !card ? $t('message.salute'): $t('message.newQuestion') }}</p>
         </div>
         <div class="mt-sm">
           <BaseFormInput v-model="form.label" :label="$t('message.label')"></BaseFormInput>
@@ -56,7 +56,7 @@ export default {
           text: '',
           questionType: 'text',
           responseType: 'text',
-          path: 'test',
+          path: '',
           internalName:'salute',
           position: {
             left: 0,

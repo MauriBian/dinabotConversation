@@ -36,7 +36,8 @@ export default {
       botName: 'Bot name',
       label: 'Label',
       salute: 'Initial greeting',
-      text: "Question text"
+      text: "Question text",
+      newQuestion: 'New question'
     }
   },
   ja: {
@@ -75,7 +76,8 @@ export default {
       botName: 'ボット名',
       salute: '最初の挨拶',
       label: '最初の挨拶',
-      text: '質問テキスト'
+      text: '質問テキスト',
+      newQuestion: '新しい質問'
     }
   },
   es: {
@@ -115,7 +117,8 @@ export default {
       newChatbotDescription: '¿Desea crear una conversación nueva?',
       label: 'Etiqueta',
       salute: 'Saludo inicial',
-      text: 'Texto de la pregunta'
+      text: 'Texto de la pregunta',
+      newQuestion: 'Nueva pregunta'
     }
   }
 }

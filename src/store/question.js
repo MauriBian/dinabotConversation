@@ -28,8 +28,7 @@ export default {
       try {
         // const dbQuestion = state.dinabot.questionList.find(db => db.internalName == question.internalName)
         const result = await axios.post(config.dinabotUrl + `/question?id=${state.dinabot._id}`, question)
-        const newQuestion = result.data
-        console.log(newQuestion)
+        const newQuestion = result.data.questionList[result.data.questionList.length - 1]
         state.dinabot.questionList.push(newQuestion)
         return newQuestion
       } catch (error) {
